@@ -4,20 +4,35 @@
  */
 package jframesource;
 
+import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.swing.table.DefaultTableCellRenderer;
 /**
  *
  * @author user
  */
 public class NewJFrame extends javax.swing.JFrame {
     
-    private ArrayList<RecIntegral> data = new ArrayList<>();
+    private Map<String, RecIntegral> data = new HashMap<>();
     
     /**
      * Creates new form NewJFrame
      */
     public NewJFrame() {
         initComponents();
+        
+        var headerRenderer = new DefaultTableCellRenderer();
+        headerRenderer.setBackground(new Color(0,150,150));
+
+        for (int i = 0; i < jTable1.getModel().getColumnCount(); i++) {
+            jTable1.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
+        
+        
     }
 
     /**
@@ -49,7 +64,6 @@ public class NewJFrame extends javax.swing.JFrame {
         setBackground(new java.awt.Color(153, 255, 51));
         setCursor(new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR));
         setResizable(false);
-        setType(java.awt.Window.Type.UTILITY);
 
         jPanel1.setBackground(new java.awt.Color(0, 167, 166));
         jPanel1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -159,7 +173,7 @@ public class NewJFrame extends javax.swing.JFrame {
         jButton4.setBackground(new java.awt.Color(0, 204, 204));
         jButton4.setFont(new java.awt.Font("Microsoft JhengHei Light", 1, 12)); // NOI18N
         jButton4.setForeground(new java.awt.Color(0, 102, 102));
-        jButton4.setText("Вычислить все");
+        jButton4.setText("Загрузить");
         jButton4.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jButton4MouseClicked(evt);
@@ -169,7 +183,7 @@ public class NewJFrame extends javax.swing.JFrame {
         jButton5.setBackground(new java.awt.Color(0, 204, 204));
         jButton5.setFont(new java.awt.Font("Microsoft JhengHei Light", 1, 12)); // NOI18N
         jButton5.setForeground(new java.awt.Color(0, 102, 102));
-        jButton5.setText("Удалить всё");
+        jButton5.setText("Очистить");
         jButton5.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jButton5MouseClicked(evt);
@@ -215,10 +229,10 @@ public class NewJFrame extends javax.swing.JFrame {
                                         .addComponent(jLabel3)))
                                 .addGap(58, 58, 58)))
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
                             .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(24, 24, 24))))
+                        .addGap(14, 14, 14))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -276,32 +290,53 @@ public class NewJFrame extends javax.swing.JFrame {
     private void jButton4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton4MouseClicked
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel)jTable1.getModel();
         
-        int count = model.getRowCount();
+        model.setRowCount(0);
+        
+        Set<String> keys = data.keySet();
+        //Collection<RecIntegral> results = data.values();
+        
+        for (String key : keys) {
+            String[] parts = key.split("\n");
+            double[] number = new double[3];
+            for (int i = 0; i < 3; i++)
+                number[i] = Double.parseDouble(parts[i]);
+            model.addRow(new Object[] {number[0], number[1], number[2], data.get(key)});
+        }
+        
+        /*int count = model.getRowCount();
 
         for (int i = 0; i < count; i++) {
             // Получение класса из коллекции
-            RecIntegral integral = data.get(i);
+            RecIntegral integral = data.get(new Object[] {String.format("%f%f%f", )});
             // Вызов метода из класса для рассчета интеграла
             double resNum = integral.CalculateResult();
 
             Object resObj = resNum;
             model.setValueAt(resObj, i, 3);
-        }
+        }*/
     }//GEN-LAST:event_jButton4MouseClicked
 
     private void jButton3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton3MouseClicked
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel)jTable1.getModel();
         
         int index = jTable1.getSelectedRow();
-
+        
         if (index == -1) return;
         
-        RecIntegral integral = data.get(index);
+        String low = jTable1.getValueAt(index, 0).toString(),
+                high = jTable1.getValueAt(index, 1).toString(),
+                step = jTable1.getValueAt(index, 2).toString();
+        
+        String keySearch = low + "\n" + high + "\n" + step;
+        
+        RecIntegral integral = data.get(keySearch);
+        
+        if (integral == null) return;
+        
         // Вызов метода из класса для рассчета интеграла
         double resNum = integral.CalculateResult();
-
-        Object resObj = resNum;
-        model.setValueAt(resObj, index, 3);
+        
+        model.setValueAt(resNum, index, 3);
     }//GEN-LAST:event_jButton3MouseClicked
 
     private void jButton2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton2MouseClicked
@@ -311,17 +346,23 @@ public class NewJFrame extends javax.swing.JFrame {
         int index = jTable1.getSelectedRow();
 
         if (index == -1) return;
+        
+        String low = jTable1.getValueAt(index, 0).toString(),
+                high = jTable1.getValueAt(index, 1).toString(),
+                step = jTable1.getValueAt(index, 2).toString();
+        
+        String keySearch = low + "\n" + high + "\n" + step;
+        
+        // Удаление записи из коллекции.
+        data.remove(keySearch);
 
         model.removeRow(index);
-        // Удаление записи из коллекции.
-        data.remove(index);
     }//GEN-LAST:event_jButton2MouseClicked
 
     private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseClicked
         // jTable1
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel)jTable1.getModel();
-
-        String temp = jTextField1.getText();
+        /*String temp = jTextField1.getText();
         if (temp.isEmpty())
         return;
         double low = Double.parseDouble(temp);
@@ -337,17 +378,26 @@ public class NewJFrame extends javax.swing.JFrame {
 
         if (low >= high || step >= high || step <= 0.0) {
             return;
-        }
-
+        }*/
+        
+        double low = Double.parseDouble(jTextField1.getText()),
+                high = Double.parseDouble(jTextField2.getText()),
+                step = Double.parseDouble(jTextField3.getText());
+        
+        String keySearch = low + "\n" + high + "\n" + step;
+        
+        if (data.containsKey(keySearch)) return;
+        
         model.addRow(new Object[] {low, high, step, 0});
         // Добавление записи в коллекцию
-        data.add(new RecIntegral(low, high, step));
+        data.put(keySearch, new RecIntegral(low, high, step));
+        //data.add(new RecIntegral(low, high, step));
     }//GEN-LAST:event_jButton1MouseClicked
 
     private void jButton5MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton5MouseClicked
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel)jTable1.getModel();
         model.setRowCount(0);
-        data.clear();
+        //data.clear();
     }//GEN-LAST:event_jButton5MouseClicked
 
     /**
